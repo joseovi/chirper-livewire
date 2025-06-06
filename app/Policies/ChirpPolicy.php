@@ -4,10 +4,15 @@ namespace App\Policies;
 
 use App\Models\Chirp;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
+use Illuminate\Auth\Access\HandlesAuthorization;
 
 class ChirpPolicy
 {
+    protected $policy =[
+    Chirp::class => ChirpPolicy::class,
+    ];
+    
+    use HandlesAuthorization;
     /**
      * Determine whether the user can view any models.
      */
@@ -45,7 +50,7 @@ class ChirpPolicy
      */
     public function delete(User $user, Chirp $chirp): bool
     {
-        return false;
+        return $this->update($user, $chirp);
     }
 
     /**

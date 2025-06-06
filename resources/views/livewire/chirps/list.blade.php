@@ -5,24 +5,32 @@ use function Livewire\Volt\{on, state};
 
 $getChirps = fn () => $this->chirps = Chirp::with('user')->latest()->get();
 
-$disableEditing = function(){
+$disableEditing = function () {
     $this->editing = null;
     return $this->getChirps();
 };
 
-state(['chirps' => $getChirps, 'editing' => null]); 
+state(['chirps' => $getChirps, 'editing' => null]);
 
-on(['chirp-created' => $getChirps,
-    'chirp_updated' => $disableEditing,
+on([
+    'chirp-created' => $getChirps,
+    'chirp-updated' => $disableEditing,
     'chirp-edit-canceled' => $disableEditing,
 ]);
 
 $edit = function (Chirp $chirp) {
     $this->editing = $chirp;
     $this->getChirps();
-};  
-?>
 
+}; 
+
+$delete = function (Chirp $chirp) {
+    $this->authorize('delete', $chirp);
+    $chirp->delete();
+    $this->getChirps();
+
+}; 
+?>
 
 <div class="mt-6 bg-white shadow-sm rounded-lg divide-y">
     @foreach ($chirps as $chirp)
@@ -39,7 +47,6 @@ $edit = function (Chirp $chirp) {
                         @unless ($chirp->created_at->eq($chirp->updated_at))
                             <small class="text-sm text-gray-600"> &middot; {{ __('edited') }}</small>
                         @endunless
-
                     </div>
                     @if ($chirp->user->is(auth()->user()))
                         <x-dropdown>
@@ -54,16 +61,19 @@ $edit = function (Chirp $chirp) {
                                 <x-dropdown-link wire:click="edit({{ $chirp->id }})">
                                     {{ __('Edit') }}
                                 </x-dropdown-link>
+                                <x-dropdown-link wire:click="delete({{ $chirp->id }})" onclick="return confirm('Are you sure to delete this chirp?')">
+                                    Delete
+                                </x-dropdown-link> 
                             </x-slot>
                         </x-dropdown>
                     @endif
                 </div>
 
-                @if ($chirp->is($editing)) 
+                @if ($chirp->is($editing))
                     <livewire:chirps.edit :chirp="$chirp" :key="$chirp->id" />
                 @else
                     <p class="mt-4 text-lg text-gray-900">{{ $chirp->message }}</p>
-                @endif 
+                @endif
             </div>
         </div>
     @endforeach
